@@ -1,0 +1,48 @@
+# Rule presets. Each preset maps a rule id to enabled (true/false).
+# Edit this file to tune presets without changing code. If this file is
+# missing or invalid, the engine falls back to the built-ins in presets.py.
+#
+# Rule ids:
+#   whitespace_normalization, repeated_word, filler_removal,
+#   transition_simplification, stock_phrase_simplification, redundant_modifier,
+#   negation_scaffold, em_dash_normalization
+
+conservative:
+  whitespace_normalization: true
+  repeated_word: true
+  filler_removal: true
+  transition_simplification: false
+  stock_phrase_simplification: false
+  redundant_modifier: false
+  negation_scaffold: false
+  em_dash_normalization: false
+
+balanced:
+  whitespace_normalization: true
+  repeated_word: true
+  filler_removal: true
+  transition_simplification: true
+  stock_phrase_simplification: true
+  redundant_modifier: true
+  negation_scaffold: false
+  em_dash_normalization: false
+
+strong:
+  whitespace_normalization: true
+  repeated_word: true
+  filler_removal: true
+  transition_simplification: true
+  stock_phrase_simplification: true
+  redundant_modifier: true
+  negation_scaffold: true
+  em_dash_normalization: true
+
+academic:
+  whitespace_normalization: true
+  repeated_word: true
+  filler_removal: true
+  transition_simplification: true
+  stock_phrase_simplification: true
+  redundant_modifier: true
+  negation_scaffold: false
+  em_dash_normalization: false

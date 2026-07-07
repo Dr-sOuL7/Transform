@@ -43,8 +43,19 @@ class Rule:
     #: Whether the rule is on by default (overridable via config).
     default_enabled: bool = True
 
-    def __init__(self, enabled: bool | None = None):
+    def __init__(self, enabled: bool | None = None, params: dict | None = None):
         self.enabled = self.default_enabled if enabled is None else enabled
+        self.params = params or {}
+        self.configure(self.params)
+
+    def configure(self, params: dict) -> None:
+        """Apply per-rule parameters from config (YAML). Default: no-op.
+
+        Subclasses override this to read tunables (thresholds, extra phrase
+        lists, confidence overrides) so behaviour can change without code edits.
+        """
+        if "confidence" in params:
+            self.confidence = params["confidence"]
 
     def propose(self, paragraph: Paragraph) -> List[Edit]:
         """Return edits this rule would make to ``paragraph`` (may be empty)."""

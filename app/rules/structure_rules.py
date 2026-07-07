@@ -53,6 +53,10 @@ class LongSentenceFlag(Rule):
     category = "sentence structure"
     word_limit = 40
 
+    def configure(self, params: dict) -> None:
+        super().configure(params)
+        self.word_limit = int(params.get("word_limit", self.word_limit))
+
     def flags(self, paragraph: Paragraph) -> List[Flag]:
         if not paragraph.is_editable():
             return []
@@ -85,4 +89,65 @@ class TriadFlag(Rule):
                 "list-of-three detected; vary if it feels formulaic",
                 excerpt=m.group(0)[:60],
             ))
+        return out
+
+
+class MiniSummaryFlag(Rule):
+    """Flag a trailing recap sentence (rulebook F32) rather than delete it."""
+
+    id = "mini_summary"
+    name = "End-of-paragraph mini-summary"
+    category = "redundancy reduction"
+
+    _OPENERS = re.compile(
+        r"^(in summary|in conclusion|to summarize|to summarise|to sum up|"
+        r"overall|in short|in brief)\b",
+        re.IGNORECASE,
+    )
+
+    def flags(self, paragraph: Paragraph) -> List[Flag]:
+        if not paragraph.is_editable():
+            return []
+        sentences = split_sentences(paragraph.plain_text())
+        if len(sentences) < 2:
+            return []
+        last = sentences[-1]
+        if self._OPENERS.match(last.strip()):
+            return [Flag(
+                self.id, paragraph.index,
+                "trailing mini-summary; drop it unless the format expects a recap",
+                excerpt=last[:60],
+            )]
+        return []
+
+
+class RestatementFlag(Rule):
+    """Flag adjacent sentences that heavily overlap (possible restatement)."""
+
+    id = "restatement"
+    name = "Adjacent restatement"
+    category = "redundancy reduction"
+    overlap_threshold = 0.7
+
+    def configure(self, params: dict) -> None:
+        super().configure(params)
+        self.overlap_threshold = float(params.get("overlap_threshold", self.overlap_threshold))
+
+    def flags(self, paragraph: Paragraph) -> List[Flag]:
+        if not paragraph.is_editable():
+            return []
+        sentences = split_sentences(paragraph.plain_text())
+        out: List[Flag] = []
+        prev_words: set | None = None
+        for sent in sentences:
+            words = {w.lower() for w in _WORD.findall(sent) if len(w) > 3}
+            if prev_words and words:
+                overlap = len(words & prev_words) / max(1, len(words | prev_words))
+                if overlap >= self.overlap_threshold:
+                    out.append(Flag(
+                        self.id, paragraph.index,
+                        "sentence closely restates the previous one; keep only the unique parts",
+                        excerpt=sent[:60],
+                    ))
+            prev_words = words
         return out

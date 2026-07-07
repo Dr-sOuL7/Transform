@@ -21,6 +21,18 @@ def at_sentence_start(text: str, pos: int) -> bool:
     return bool(_SENTENCE_END.search(text[:pos]))
 
 
+def cap_like(original: str, replacement: str) -> str:
+    """Match ``replacement``'s leading capitalisation to ``original``'s.
+
+    So "Due to the fact that" -> "Because" while "due to the fact that" ->
+    "because", preserving sentence-initial capitals without needing to know the
+    position.
+    """
+    if original and replacement and original[0].isupper():
+        return replacement[0].upper() + replacement[1:]
+    return replacement
+
+
 def clean_deletion(text: str, start: int, end: int) -> tuple[int, int, str]:
     """Delete ``[start, end)`` cleanly; returns ``(start, end, replacement)``.
 

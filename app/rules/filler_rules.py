@@ -41,13 +41,20 @@ class FillerRemovalRule(Rule):
     priority = 10
     confidence = "high"
 
+    def configure(self, params: dict) -> None:
+        super().configure(params)
+        self._compiled = list(_COMPILED)
+        # Allow YAML to add extra filler phrases (trailing \s+ appended).
+        for phrase in params.get("extra_phrases", []) or []:
+            self._compiled.append(re.compile(re.escape(phrase) + r"\s+", re.IGNORECASE))
+
     def propose(self, paragraph: Paragraph) -> List[Edit]:
         if not paragraph.is_editable():
             return []
         text = paragraph.plain_text()
         edits: List[Edit] = []
 
-        for pattern in _COMPILED:
+        for pattern in self._compiled:
             for m in pattern.finditer(text):
                 s, e, repl = clean_deletion(text, m.start(), m.end())
                 edits.append(

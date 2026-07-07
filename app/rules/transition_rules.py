@@ -35,6 +35,10 @@ class TransitionSimplificationRule(Rule):
     #: Only trim a given connective once its count in the paragraph exceeds this.
     repeat_threshold = 1
 
+    def configure(self, params: dict) -> None:
+        super().configure(params)
+        self.repeat_threshold = int(params.get("repeat_threshold", self.repeat_threshold))
+
     def propose(self, paragraph: Paragraph) -> List[Edit]:
         if not paragraph.is_editable():
             return []

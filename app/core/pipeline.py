@@ -23,6 +23,7 @@ from .model import Document
 from .parser import parse_docx
 from .validator import validate_document, validate_paragraph
 from app.rules.registry import build_registry
+from app.configs.loader import load_rule_params
 from app.reporting.report import ChangeEntry, FlagEntry, IssueEntry, ParagraphView, Report
 
 
@@ -50,12 +51,15 @@ def transform_document(
     in_path: str,
     out_path: str,
     enabled: Optional[Dict[str, bool]] = None,
+    params: Optional[Dict[str, dict]] = None,
 ) -> Report:
     """Run the full pipeline and return a :class:`Report`."""
     document = parse_docx(in_path)
     original_texts = [p.plain_text() for p in document.paragraphs]
     stats = analyze(document)
-    rules = build_registry(enabled)
+    if params is None:
+        params = load_rule_params()
+    rules = build_registry(enabled, params)
     rule_names = {r.id: r.name for r in rules}
 
     report = Report(

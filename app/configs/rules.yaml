@@ -1,0 +1,27 @@
+# Per-rule parameters. Optional -- omit a rule to use its built-in defaults.
+# Keys under each rule id are passed to that rule's configure(). Unknown keys
+# are ignored. If this file is missing or invalid, all rules use defaults.
+
+filler_removal:
+  # Extra throat-clearing phrases to strip (in addition to the built-in list).
+  extra_phrases:
+    - "As we all know,"
+    - "It is generally accepted that"
+
+transition_simplification:
+  # Keep this many occurrences of a repeated additive transition before trimming.
+  repeat_threshold: 1
+
+stock_phrase_simplification:
+  # Add or override wordy-phrase replacements.
+  extra:
+    "in a number of cases": "sometimes"
+    "at all times": "always"
+
+long_sentence:
+  # Flag sentences longer than this many words.
+  word_limit: 40
+
+restatement:
+  # Flag adjacent sentences whose word overlap is at least this fraction.
+  overlap_threshold: 0.7

@@ -11,7 +11,7 @@ risk changing meaning.
 
 ## Status
 
-**Phase 1 (MVP) — engine + CLI + local web UI.** Fully offline, no cloud, no model downloads.
+**Phase 1 + 2 — engine, CLI, local web UI, YAML config.** Fully offline, no cloud, no model downloads.
 
 - ✅ DOCX parser + writer (edits run text **in place**, so styles, tables,
   images, headers/footers, and numbering are preserved automatically)
@@ -24,9 +24,14 @@ risk changing meaning.
 - ✅ CLI with presets
 - ✅ Local web UI (FastAPI + browser): drag-drop upload, preset + per-rule
   toggles, side-by-side word-level diff, live stats, edit log, warnings, export
+- ✅ **YAML rule profiles** (`configs/presets.yaml`, `configs/rules.yaml`) with
+  built-in fallback — tune presets and rule parameters without editing code
+- ✅ **Richer rule set**: wordy-phrase simplification, redundant-modifier
+  (tautology) removal, repeated-word cleanup, plus mini-summary / restatement
+  flags
 
-Not yet built (later phases): YAML rule files, spaCy-based linguistics,
-batch processing, packaging into an executable.
+Not yet built (later phases): spaCy-based linguistics, batch processing,
+packaging into an executable.
 
 ## Install
 
@@ -62,8 +67,19 @@ Options:
 | `--report-txt PATH` | write text report |
 | `--quiet` | don't print the report to stdout |
 
-Rule ids: `whitespace_normalization`, `filler_removal`,
-`transition_simplification`, `negation_scaffold`, `em_dash_normalization`.
+Rule ids: `whitespace_normalization`, `repeated_word`, `filler_removal`,
+`transition_simplification`, `stock_phrase_simplification`, `redundant_modifier`,
+`negation_scaffold`, `em_dash_normalization`.
+
+## Configuration (YAML)
+
+Presets and per-rule parameters live in editable YAML files; if they're missing
+or invalid the engine falls back to built-in defaults.
+
+- `app/configs/presets.yaml` — named presets mapping each rule id to on/off.
+- `app/configs/rules.yaml` — per-rule tunables, e.g. extra filler phrases,
+  extra wordy-phrase replacements, `long_sentence.word_limit`,
+  `transition_simplification.repeat_threshold`.
 
 ## Pipeline
 
@@ -96,9 +112,15 @@ app/
     filler_rules.py      # throat-clearing removal
     transition_rules.py  # repeated-transition trimming
     cleanup_rules.py     # whitespace / negation scaffold / em dash
-    structure_rules.py   # flag-only observations (openers, long sentences, triads)
+    redundancy_rules.py  # wordy phrases / redundant modifiers / repeated words
+    structure_rules.py   # flag-only observations (openers, long sentences, triads,
+                         #   mini-summaries, restatements)
   reporting/report.py    # change report (text + JSON)
-  configs/presets.py     # rule presets
+  configs/
+    presets.py           # built-in preset defaults (fallback)
+    loader.py            # YAML loader (presets + rule params)
+    presets.yaml         # editable presets
+    rules.yaml           # editable per-rule params
   web/
     server.py            # FastAPI app (offline, localhost)
     static/              # index.html, style.css, app.js (side-by-side diff UI)
@@ -113,7 +135,6 @@ python -m pytest -q
 
 ## Roadmap
 
-- **Phase 2:** YAML/JSON rule profiles, richer reports, stronger protection.
 - **Phase 3:** offline NLP (sentence segmentation, POS, NER) for smarter, still
   meaning-preserving variation.
 - **Phase 4:** packaging into a distributable executable (e.g. PyInstaller),

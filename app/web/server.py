@@ -23,7 +23,8 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.pipeline import transform_document
-from app.configs.presets import PRESETS, EDITABLE_RULES, resolve_enabled
+from app.configs.presets import EDITABLE_RULES
+from app.configs.loader import load_presets, resolve_enabled
 from app.rules.registry import rule_catalog
 
 _HERE = Path(__file__).parent
@@ -49,7 +50,7 @@ def index() -> HTMLResponse:
 def config() -> dict:
     """Presets, toggleable rule ids, and full rule metadata for the UI."""
     return {
-        "presets": PRESETS,
+        "presets": load_presets(),
         "editable_rules": EDITABLE_RULES,
         "catalog": rule_catalog(),
     }
@@ -63,7 +64,7 @@ async def transform(
 ) -> dict:
     if not file.filename or not file.filename.lower().endswith(".docx"):
         raise HTTPException(status_code=400, detail="Please upload a .docx file.")
-    if preset not in PRESETS:
+    if preset not in load_presets():
         raise HTTPException(status_code=400, detail=f"Unknown preset: {preset}")
 
     try:

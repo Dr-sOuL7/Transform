@@ -16,7 +16,7 @@ import os
 import sys
 
 from app.core.pipeline import transform_document
-from app.configs.presets import PRESETS, resolve_enabled
+from app.configs.loader import load_presets, resolve_enabled
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -27,7 +27,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument("input", help="input .docx file")
     p.add_argument("-o", "--output", help="output .docx (default: <input>.refined.docx)")
     p.add_argument(
-        "--preset", default="balanced", choices=sorted(PRESETS),
+        "--preset", default="balanced", choices=sorted(load_presets()),
         help="rule preset (default: balanced)",
     )
     p.add_argument("--enable", action="append", default=[], metavar="RULE_ID",
