@@ -116,12 +116,19 @@ def transform_document(
 
     for paragraph, original in zip(document.paragraphs, original_texts):
         current = paragraph.plain_text()
+        # Locked substrings are verbatim in both texts; longest-first so the UI
+        # wraps the most specific match first.
+        locked = sorted(
+            {s.text for s in protection.detect_spans(original)},
+            key=len, reverse=True,
+        )
         report.paragraphs.append(ParagraphView(
             index=paragraph.index,
             block_type=paragraph.block_type.value,
             original=original,
             transformed=current,
             changed=(original != current),
+            protected=locked,
         ))
 
     for issue in validate_document(document, original_texts):

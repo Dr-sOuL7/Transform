@@ -23,7 +23,9 @@ risk changing meaning.
 - ✅ Explainable change report (text + JSON)
 - ✅ CLI with presets
 - ✅ Local web UI (FastAPI + browser): drag-drop upload, preset + per-rule
-  toggles, side-by-side word-level diff, live stats, edit log, warnings, export
+  toggles, side-by-side word-level diff with **protected-content highlighting**,
+  live stats, edit log, warnings, `.docx` export, **JSON report download**,
+  **saved rule profiles** (browser-local), and start-over reset
 - ✅ **YAML rule profiles** (`configs/presets.yaml`, `configs/rules.yaml`) with
   built-in fallback — tune presets and rule parameters without editing code
 - ✅ **Richer rule set**: wordy-phrase simplification, redundant-modifier

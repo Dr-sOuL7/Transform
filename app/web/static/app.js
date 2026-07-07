@@ -1,6 +1,7 @@
 "use strict";
 
 const $ = (sel) => document.querySelector(sel);
+const PROFILE_KEY = "tt_profiles";
 
 const state = {
   file: null,
@@ -25,23 +26,26 @@ async function init() {
     o.textContent = name[0].toUpperCase() + name.slice(1);
     sel.appendChild(o);
   });
-  sel.value = "balanced";
+  sel.value = state.presets.balanced ? "balanced" : Object.keys(state.presets)[0];
   sel.addEventListener("change", () => { syncRulesToPreset(); describePreset(); });
 
   buildRuleToggles();
   syncRulesToPreset();
   describePreset();
   wireUpload();
+  wireProfiles();
   $("#run").addEventListener("click", runTransform);
+  $("#report-btn").addEventListener("click", downloadReport);
+  $("#reset-btn").addEventListener("click", resetAll);
   $("#viewtoggle").querySelectorAll("button").forEach((b) =>
     b.addEventListener("click", () => setView(b.dataset.view)));
 }
 
 const PRESET_NOTES = {
   conservative: "Only the safest, highest-confidence edits.",
-  balanced: "Safe cleanups plus repeated-transition trimming. Recommended.",
+  balanced: "Safe cleanups, transitions, and concision. Recommended.",
   strong: "More stylistic latitude, still meaning-preserving.",
-  academic: "Structure over word-swapping; scaffolds left intact.",
+  academic: "Concision and structure; scaffolds left intact.",
 };
 function describePreset() {
   $("#preset-hint").textContent = PRESET_NOTES[$("#preset").value] || "";
@@ -67,6 +71,12 @@ function syncRulesToPreset() {
   const preset = state.presets[$("#preset").value] || {};
   document.querySelectorAll("#rules input[data-rule]").forEach((cb) => {
     cb.checked = !!preset[cb.dataset.rule];
+  });
+}
+
+function applyOverrides(overrides) {
+  document.querySelectorAll("#rules input[data-rule]").forEach((cb) => {
+    if (cb.dataset.rule in overrides) cb.checked = !!overrides[cb.dataset.rule];
   });
 }
 
@@ -102,6 +112,56 @@ function setFile(file) {
   setStatus("");
 }
 
+// ---------- profiles (localStorage) ----------
+function loadProfiles() {
+  try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveProfiles(p) { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }
+
+function refreshProfileList() {
+  const sel = $("#profiles");
+  const names = Object.keys(loadProfiles()).sort();
+  sel.innerHTML = `<option value="">Saved profiles…</option>` +
+    names.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
+}
+
+function wireProfiles() {
+  refreshProfileList();
+  $("#saveprof").addEventListener("click", () => {
+    const name = $("#profname").value.trim();
+    if (!name) { setStatus("Name the profile first.", true); return; }
+    const all = loadProfiles();
+    all[name] = { preset: $("#preset").value, overrides: currentOverrides() };
+    saveProfiles(all);
+    $("#profname").value = "";
+    refreshProfileList();
+    $("#profiles").value = name;
+    setStatus(`Saved profile “${name}”.`);
+  });
+  $("#loadprof").addEventListener("click", () => {
+    const name = $("#profiles").value;
+    if (!name) return;
+    const prof = loadProfiles()[name];
+    if (!prof) return;
+    if (prof.preset && state.presets[prof.preset]) {
+      $("#preset").value = prof.preset;
+      describePreset();
+    }
+    applyOverrides(prof.overrides || {});
+    setStatus(`Loaded profile “${name}”.`);
+  });
+  $("#delprof").addEventListener("click", () => {
+    const name = $("#profiles").value;
+    if (!name) return;
+    const all = loadProfiles();
+    delete all[name];
+    saveProfiles(all);
+    refreshProfileList();
+    setStatus(`Deleted profile “${name}”.`);
+  });
+}
+
 // ---------- run ----------
 async function runTransform() {
   if (!state.file) return;
@@ -125,6 +185,34 @@ async function runTransform() {
   } finally {
     $("#run").disabled = false;
   }
+}
+
+function downloadReport() {
+  if (!state.report) return;
+  const blob = new Blob([JSON.stringify(state.report, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = (state.report.download_name || "report").replace(/\.docx$/, "") + ".report.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetAll() {
+  state.file = null;
+  state.report = null;
+  $("#file").value = "";
+  $("#filename").textContent = "";
+  $("#run").disabled = true;
+  $("#export-wrap").hidden = true;
+  $("#viewtoggle").hidden = true;
+  $("#diff").innerHTML = `<div class="empty">Upload a document and press <em>Transform</em> to see changes.</div>`;
+  $("#stats").innerHTML = `<div class="empty">No document yet.</div>`;
+  $("#changes").innerHTML = `<div class="empty">—</div>`;
+  $("#flags").innerHTML = `<div class="empty">—</div>`;
+  $("#warnings").innerHTML = "";
+  $("#warn-head").hidden = true;
+  setStatus("");
 }
 
 // ---------- render ----------
@@ -172,7 +260,9 @@ function renderDiff(r) {
   host.innerHTML = paras.map((p) => {
     const isHeading = ["heading", "title", "caption"].includes(p.block_type);
     const cls = p.changed ? "pair" : "pair unchanged";
-    const [before, after] = wordDiff(p.original, p.transformed);
+    let [before, after] = wordDiff(p.original, p.transformed);
+    before = highlightLocks(before, p.protected);
+    after = highlightLocks(after, p.protected);
     const hcls = isHeading ? "heading" : "";
     return `<div class="${cls}">
       <div class="cell before ${hcls}"><span class="cap">before · para ${p.index}</span><span class="body">${before}</span></div>
@@ -242,6 +332,28 @@ function wordDiff(a, b) {
   while (i < n) { before += `<del>${escapeHtml(at[i++])}</del>`; }
   while (j < m) { after += `<ins>${escapeHtml(bt[j++])}</ins>`; }
   return [before || "<span class='cap'>(empty)</span>", after || "<span class='cap'>(empty)</span>"];
+}
+
+// Wrap protected substrings (sorted longest-first) in the diff HTML. Protected
+// content is verbatim and sits in the common (untagged) runs, so an escaped
+// substring replace lands cleanly. Each match becomes a private-use sentinel
+// first, then expands to markup, so a shorter lock can't re-wrap inside a
+// longer one already handled.
+const _S0 = String.fromCharCode(0xE000);
+const _S1 = String.fromCharCode(0xE001);
+const _SENTINEL = new RegExp(_S0 + "(\\d+)" + _S1, "g");
+function highlightLocks(html, locks) {
+  if (!locks || !locks.length) return html;
+  const marks = [];
+  for (const lock of locks) {
+    const esc = escapeHtml(lock);
+    if (!esc) continue;
+    const idx = marks.length;
+    const next = html.split(esc).join(_S0 + idx + _S1);
+    if (next !== html) { marks.push(esc); html = next; }
+  }
+  return html.replace(_SENTINEL,
+    (_, i) => `<span class="lock">${marks[Number(i)]}</span>`);
 }
 
 // ---------- utils ----------

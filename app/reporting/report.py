@@ -46,6 +46,8 @@ class ParagraphView:
     original: str
     transformed: str
     changed: bool
+    #: Distinct locked substrings (numbers, citations, URLs, …) to highlight.
+    protected: List[str] = field(default_factory=list)
 
 
 @dataclass

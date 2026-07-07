@@ -38,6 +38,18 @@
       <h2>3 · Rules</h2>
       <div id="rules" class="rules"></div>
 
+      <div class="profiles">
+        <div class="prow">
+          <input id="profname" placeholder="Save these rules as…" />
+          <button id="saveprof" class="mini" title="Save current toggles">Save</button>
+        </div>
+        <div class="prow">
+          <select id="profiles"><option value="">Saved profiles…</option></select>
+          <button id="loadprof" class="mini">Load</button>
+          <button id="delprof" class="mini danger" title="Delete profile">✕</button>
+        </div>
+      </div>
+
       <button id="run" class="primary" disabled>Transform document</button>
       <p id="status" class="status"></p>
     </aside>
@@ -63,6 +75,11 @@
 
       <div id="export-wrap" hidden>
         <a id="download" class="primary block" href="#">⬇ Export refined .docx</a>
+        <div class="export-row">
+          <button id="report-btn" class="mini">Download report (JSON)</button>
+          <button id="reset-btn" class="mini">Start over</button>
+        </div>
+        <p class="legend"><span class="lock">locked</span> = protected content, never edited</p>
       </div>
 
       <h2>Edit log</h2>

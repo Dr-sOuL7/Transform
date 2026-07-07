@@ -57,3 +57,16 @@ def test_report_json_serialises(sample_docx, tmp_path):
     payload = report.to_json()
     assert '"changes"' in payload
     assert '"summary"' in payload
+
+
+def test_paragraph_view_exposes_protected_spans(sample_docx, tmp_path):
+    out = str(tmp_path / "out.docx")
+    report = transform_document(sample_docx, out)
+    # The paragraph with the dataset stats should expose its locked substrings,
+    # longest-first, for the UI to highlight.
+    locked = [tok for pv in report.paragraphs for tok in pv.protected]
+    assert any("1,234" in t for t in locked)
+    assert any("https://example.com" in t for t in locked)
+    for pv in report.paragraphs:
+        lengths = [len(t) for t in pv.protected]
+        assert lengths == sorted(lengths, reverse=True)
