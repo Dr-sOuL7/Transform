@@ -61,6 +61,10 @@ packaging\build.bat              # -> dist\TextTransform.exe
 Then run the produced file (double-click on Windows). It starts the server on
 localhost and opens the app; close the window to stop it.
 
+The build scripts are self-contained (they create a venv, install deps, and
+build). For a step-by-step Windows walkthrough, see
+[`packaging/WINDOWS.md`](packaging/WINDOWS.md).
+
 > PyInstaller does **not** cross-compile: build the Windows `.exe` on Windows,
 > the macOS binary on macOS, and the Linux binary on Linux. The one spec
 > (`packaging/transform.spec`) works on all three. The Linux build is verified;
