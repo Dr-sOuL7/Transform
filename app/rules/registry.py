@@ -29,6 +29,20 @@ ALL_RULES: List[type[Rule]] = [
 ]
 
 
+def rule_catalog() -> List[dict]:
+    """Metadata for every known rule (for UIs to render toggles/legends)."""
+    return [
+        {
+            "id": cls.id,
+            "name": cls.name,
+            "category": cls.category,
+            "confidence": getattr(cls, "confidence", "high"),
+            "default_enabled": cls.default_enabled,
+        }
+        for cls in ALL_RULES
+    ]
+
+
 def build_registry(enabled: Dict[str, bool] | None = None) -> List[Rule]:
     """Instantiate rules, apply the ``enabled`` override map, sort by priority."""
     enabled = enabled or {}

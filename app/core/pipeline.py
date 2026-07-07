@@ -23,7 +23,7 @@ from .model import Document
 from .parser import parse_docx
 from .validator import validate_document, validate_paragraph
 from app.rules.registry import build_registry
-from app.reporting.report import ChangeEntry, FlagEntry, IssueEntry, Report
+from app.reporting.report import ChangeEntry, FlagEntry, IssueEntry, ParagraphView, Report
 
 
 _CTX = 22  # chars of context shown on each side of an edit in the report
@@ -109,6 +109,16 @@ def transform_document(
             ))
 
     export_docx(document, out_path)
+
+    for paragraph, original in zip(document.paragraphs, original_texts):
+        current = paragraph.plain_text()
+        report.paragraphs.append(ParagraphView(
+            index=paragraph.index,
+            block_type=paragraph.block_type.value,
+            original=original,
+            transformed=current,
+            changed=(original != current),
+        ))
 
     for issue in validate_document(document, original_texts):
         report.issues.append(IssueEntry(issue.level, issue.paragraph_index, issue.message))

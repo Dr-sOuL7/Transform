@@ -38,6 +38,17 @@ class IssueEntry:
 
 
 @dataclass
+class ParagraphView:
+    """Original vs transformed text for one paragraph (for the diff view)."""
+
+    index: int
+    block_type: str
+    original: str
+    transformed: str
+    changed: bool
+
+
+@dataclass
 class Report:
     source: str = ""
     output: str = ""
@@ -48,6 +59,7 @@ class Report:
     flags: List[FlagEntry] = field(default_factory=list)
     issues: List[IssueEntry] = field(default_factory=list)
     rejected: List[IssueEntry] = field(default_factory=list)
+    paragraphs: List[ParagraphView] = field(default_factory=list)
 
     # -- serialisation ---------------------------------------------------
     def to_dict(self) -> Dict:
@@ -67,6 +79,7 @@ class Report:
             "flags": [asdict(f) for f in self.flags],
             "issues": [asdict(i) for i in self.issues],
             "rejected": [asdict(r) for r in self.rejected],
+            "paragraphs": [asdict(p) for p in self.paragraphs],
         }
 
     def to_json(self, indent: int = 2) -> str:

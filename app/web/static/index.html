@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Offline Text Transformation</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <div>
+        <h1>Offline Text Transformation</h1>
+        <p class="tag">Rule-based .docx refinement · runs locally · nothing leaves your machine</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT: controls -->
+    <aside class="panel controls">
+      <h2>1 · Document</h2>
+      <label id="drop" class="dropzone" for="file">
+        <input id="file" type="file" accept=".docx" hidden />
+        <span class="dz-icon">⬆</span>
+        <span class="dz-text">Drop a <strong>.docx</strong> here or click to browse</span>
+        <span id="filename" class="dz-file"></span>
+      </label>
+
+      <h2>2 · Mode</h2>
+      <label class="field">
+        <span>Preset</span>
+        <select id="preset"></select>
+      </label>
+      <p class="hint" id="preset-hint"></p>
+
+      <h2>3 · Rules</h2>
+      <div id="rules" class="rules"></div>
+
+      <button id="run" class="primary" disabled>Transform document</button>
+      <p id="status" class="status"></p>
+    </aside>
+
+    <!-- CENTER: diff -->
+    <section class="panel diff">
+      <div class="diff-head">
+        <h2>Comparison</h2>
+        <div class="toggle" id="viewtoggle" hidden>
+          <button data-view="changed" class="active">Changed only</button>
+          <button data-view="all">All paragraphs</button>
+        </div>
+      </div>
+      <div id="diff" class="diff-body">
+        <div class="empty">Upload a document and press <em>Transform</em> to see changes.</div>
+      </div>
+    </section>
+
+    <!-- RIGHT: report -->
+    <aside class="panel report">
+      <h2>Analysis</h2>
+      <div id="stats" class="stats"><div class="empty">No document yet.</div></div>
+
+      <div id="export-wrap" hidden>
+        <a id="download" class="primary block" href="#">⬇ Export refined .docx</a>
+      </div>
+
+      <h2>Edit log</h2>
+      <div id="changes" class="log"><div class="empty">—</div></div>
+
+      <h2>Suggestions</h2>
+      <div id="flags" class="log"><div class="empty">—</div></div>
+
+      <h2 id="warn-head" hidden>Warnings</h2>
+      <div id="warnings" class="log"></div>
+    </aside>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

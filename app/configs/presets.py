@@ -19,6 +19,9 @@ WHITESPACE = "whitespace_normalization"
 NEGATION = "negation_scaffold"
 EMDASH = "em_dash_normalization"
 
+# Rules the user can toggle in the UI (the edit-producing rules).
+EDITABLE_RULES: List[str] = [WHITESPACE, FILLER, TRANSITION, NEGATION, EMDASH]
+
 PRESETS: Dict[str, Dict[str, bool]] = {
     # Only the safest, highest-confidence edits.
     "conservative": {

@@ -11,7 +11,7 @@ risk changing meaning.
 
 ## Status
 
-**Phase 1 (MVP) — engine + CLI.** Fully offline, no cloud, no model downloads.
+**Phase 1 (MVP) — engine + CLI + local web UI.** Fully offline, no cloud, no model downloads.
 
 - ✅ DOCX parser + writer (edits run text **in place**, so styles, tables,
   images, headers/footers, and numbering are preserved automatically)
@@ -22,8 +22,10 @@ risk changing meaning.
 - ✅ Pre-apply + whole-document validation (unsafe edits are rejected, not shipped)
 - ✅ Explainable change report (text + JSON)
 - ✅ CLI with presets
+- ✅ Local web UI (FastAPI + browser): drag-drop upload, preset + per-rule
+  toggles, side-by-side word-level diff, live stats, edit log, warnings, export
 
-Not yet built (later phases): GUI, YAML rule files, spaCy-based linguistics,
+Not yet built (later phases): YAML rule files, spaCy-based linguistics,
 batch processing, packaging into an executable.
 
 ## Install
@@ -34,7 +36,17 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Use
+## Use — web UI
+
+```bash
+python -m app.web        # then open http://127.0.0.1:8000
+```
+
+Runs entirely on localhost; nothing leaves your machine. Drop a `.docx`, pick a
+preset (and toggle individual rules), press **Transform**, review the
+side-by-side diff and edit log, and export the refined `.docx`.
+
+## Use — CLI
 
 ```bash
 python -m app.cli input.docx -o output.docx --preset balanced --report report.json
@@ -87,6 +99,9 @@ app/
     structure_rules.py   # flag-only observations (openers, long sentences, triads)
   reporting/report.py    # change report (text + JSON)
   configs/presets.py     # rule presets
+  web/
+    server.py            # FastAPI app (offline, localhost)
+    static/              # index.html, style.css, app.js (side-by-side diff UI)
 tests/                   # pytest suite
 ```
 
@@ -101,5 +116,5 @@ python -m pytest -q
 - **Phase 2:** YAML/JSON rule profiles, richer reports, stronger protection.
 - **Phase 3:** offline NLP (sentence segmentation, POS, NER) for smarter, still
   meaning-preserving variation.
-- **Phase 4:** GUI (a local web UI is recommended so it is verifiable
-  cross-platform) and packaging into a distributable executable.
+- **Phase 4:** packaging into a distributable executable (e.g. PyInstaller),
+  batch processing, profile manager, history.
