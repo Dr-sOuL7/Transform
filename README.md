@@ -11,7 +11,7 @@ risk changing meaning.
 
 ## Status
 
-**Phase 1 + 2 — engine, CLI, local web UI, YAML config.** Fully offline, no cloud, no model downloads.
+**Phase 1 + 2 + packaging — engine, CLI, local web UI, YAML config, single-file build.** Fully offline, no cloud, no model downloads.
 
 - ✅ DOCX parser + writer (edits run text **in place**, so styles, tables,
   images, headers/footers, and numbering are preserved automatically)
@@ -32,8 +32,10 @@ risk changing meaning.
   (tautology) removal, repeated-word cleanup, plus mini-summary / restatement
   flags
 
-Not yet built (later phases): spaCy-based linguistics, batch processing,
-packaging into an executable.
+- ✅ **Packaged as a single-file executable** (PyInstaller) that launches the
+  offline app and opens the browser — no Python install required
+
+Not yet built (later phases): spaCy-based linguistics, batch processing.
 
 ## Install
 
@@ -43,10 +45,37 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Use — web UI
+## Packaged app (no Python needed)
+
+Build a single self-contained executable that launches the offline web app and
+opens your browser:
+
+```bash
+# Linux / macOS
+bash packaging/build.sh          # -> dist/TextTransform
+
+# Windows
+packaging\build.bat              # -> dist\TextTransform.exe
+```
+
+Then run the produced file (double-click on Windows). It starts the server on
+localhost and opens the app; close the window to stop it.
+
+> PyInstaller does **not** cross-compile: build the Windows `.exe` on Windows,
+> the macOS binary on macOS, and the Linux binary on Linux. The one spec
+> (`packaging/transform.spec`) works on all three. The Linux build is verified;
+> the Windows/macOS scripts use the same spec.
+
+## Use — web UI (from source)
 
 ```bash
 python -m app.web        # then open http://127.0.0.1:8000
+```
+
+Or launch it exactly like the packaged app (auto-picks a port, opens browser):
+
+```bash
+python -m app.launcher
 ```
 
 Runs entirely on localhost; nothing leaves your machine. Drop a `.docx`, pick a
@@ -99,6 +128,7 @@ length) before anything is committed.
 ```
 app/
   cli.py                 # command-line entry point
+  launcher.py            # desktop launcher (packaged entry point)
   core/
     model.py             # Document / Paragraph / Run / Edit / ProtectedSpan
     parser.py            # .docx -> model
@@ -126,6 +156,9 @@ app/
   web/
     server.py            # FastAPI app (offline, localhost)
     static/              # index.html, style.css, app.js (side-by-side diff UI)
+packaging/
+  transform.spec         # PyInstaller spec (cross-platform)
+  build.sh / build.bat   # one-command build scripts
 tests/                   # pytest suite
 ```
 
@@ -139,5 +172,4 @@ python -m pytest -q
 
 - **Phase 3:** offline NLP (sentence segmentation, POS, NER) for smarter, still
   meaning-preserving variation.
-- **Phase 4:** packaging into a distributable executable (e.g. PyInstaller),
-  batch processing, profile manager, history.
+- **Phase 4:** batch processing, in-app profile manager, history, auto-update.
